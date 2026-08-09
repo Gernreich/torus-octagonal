@@ -211,7 +211,7 @@ Invert the 59.693 disc instead and it lands at 58.149 / 61.149 — a **22mm** ri
 **[`BuildA1_90_25.svg`](BuildA1_90_25.svg)** is those 18 pieces already laid out, plus four extras
 the torus itself does not need — two single-piece rings that stiffen it, and two square patches
 harvested from the waste inside those rings, for joining sliced sections. Assembled by exactly the
-Route A steps above, and verified: 26 contours, holes concentric with their plates, joint phase
+Route A steps above, and verified: 24 contours, holes concentric with their plates, joint phase
 complementary, no overlaps, and a cut order that never frees a part before it is cut.
 
 **Two things before you send it**, both immediately below: the violet lines are not part of
@@ -224,9 +224,8 @@ size or thickness use Route A, or Part 11 for the general formulas; none of the 
 
 ### Note — the violet lines
 
-**They are not part of the torus.** The file carries 64 violet paths alongside the 26 cut contours,
-and they are all one family: **16 on each of the two plates and two rings**, one at the middle of
-every flat and one at every corner. Each is a single straight line from the hole edge out to the
+**They are not part of the torus.** The file carries 56 violet paths alongside the 24 cut contours,
+and they are all one family: **14 on each of the two plates and two rings**. Each is a single straight line from the hole edge out to the
 rim — apothem 55.2 to 83.2 on the plates, whose fingers stand proud of that line, and 55.2 to 86.2
 on the rings, which have none — so together they divide each wall into sixteen segments. None
 overruns its octagon.
@@ -236,7 +235,7 @@ reach the simple trumpet; the segments they define are also the patches for join
 together. Turn one green to cut it, and leave the rest violet.
 
 Ignore all of them for a plain torus — set the colour to a non-cutting layer, or delete it.
-`verify.js` skips exactly this one colour, which is why it reports 26 contours rather than 90.
+`verify.js` skips exactly this one colour, which is why it reports 24 contours rather than 80.
 
 ↩ [back to the top](#octagonaltorus--parametric-90mm-radius-25--25mm-cross-section)
 
@@ -246,14 +245,14 @@ Ignore all of them for a plain torus — set the colour to a non-cutting layer, 
 
 | | colour | what, and why there |
 |---|---|---|
-| 1 | green `#00ff00` | everything nested **inside a plate or ring hole** — 8 panels and 2 patches |
+| 1 | green `#00ff00` | the 7 panels nested **inside a plate hole** |
 | 2 | orange `#ff8000` | the 4 plate and ring holes — frees the waste centres |
-| 3 | cyan `#00ffff` | the remaining 8 panels, out on the open sheet |
+| 3 | cyan `#00ffff` | the remaining 9 panels, out on the open sheet — four of them nested at 45° |
 | 4 | black `#000000` | the plate and ring rims — frees them |
 
 All four are explicit stroke colours, so select-same-colour finds each group and a colour-keyed job
 lists all four. **Violet is the fifth colour in the file and takes no operation at all**: those 64
-lines are the optional cuts across the plate and ring walls, sixteen per octagon, which this build
+lines are the optional cuts across the plate and ring walls, fourteen per octagon, which this build
 does not make. Marking them explicitly is the point, so "not cut" is a decision recorded in the
 drawing rather than a colour someone forgot to map.
 
@@ -283,20 +282,20 @@ rather than asserted here:
 
 ```
   CUT ORDER
-    1. green  x10  mixed — 8 panel(s), 2 patch(es), 0 hole(s), 0 rim(s)
+    1. green  x7   panels nested in the plate holes — cut before the waste is freed
     2. orange x4   plate holes
-    3. cyan   x8   panels on the open sheet
+    3. cyan   x9   panels on the open sheet
     4. black  x4   plate rims — frees the plates
-    tightest nested piece to its hole: 1.152mm  (76.066 x 76.066 patch in plate 3) — kerf comes off both sides of that
-    8 nested panels and 2 patches cut before their hole ✓   holes before rims ✓
+    tightest nested piece to its hole: 0.265mm  (48.372 x 31.2 panel in plate 0) — kerf comes off both sides of that
+    7 nested panels and 0 patches cut before their hole ✓   holes before rims ✓
 
   SKIP LINES  (violet — carried, not cut)
-    plate 0: 16 line(s), apothem 55.249 … 83.407   edge at 86.25
-    plate 1: 16 line(s), apothem 55.249 … 83.25   edge at 86.25
-    plate 2: 16 line(s), apothem 55.249 … 86.25   edge at 86.25
-    plate 3: 16 line(s), apothem 55.249 … 86.25   edge at 86.25
+    plate 0: 14 line(s), apothem 55.249 … 83.407   edge at 86.25
+    plate 1: 14 line(s), apothem 55.249 … 83.25   edge at 86.25
+    plate 2: 14 line(s), apothem 55.249 … 86.25   edge at 86.25
+    plate 3: 14 line(s), apothem 55.249 … 86.25   edge at 86.25
     none reaches past its octagon's outer edge ✓
-    every plate carries the same 16 ✓
+    every plate carries the same 14 ✓
 ```
 
 ## Before cutting the full sheet
@@ -837,7 +836,7 @@ nonsense.
 | `RunA1_R90.svg` | Route A run 1 | discs 83.149→86.149, panels 73.326 / 71.568 |
 | `RunA2_R59Point693.svg` | Route A run 2 | discs 55.149→58.149, panels 50.130 / 48.372 |
 | `RunA3_R56Point446.svg` | Route A run 3 | discs 52.149→55.149; only its disc is used, as the hole cutter |
-| **`BuildA1_90_25.svg`** | **final — cut this** | **26 contours, holes stitched and concentric, phase and cut order confirmed ✓** |
+| **`BuildA1_90_25.svg`** | **final — cut this** | **24 contours, holes stitched and concentric, phase and cut order confirmed ✓** |
 
 Nothing else in the repository is a part:
 

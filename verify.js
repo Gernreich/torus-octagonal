@@ -126,12 +126,58 @@ function f(x){ return Math.round(x*1000)/1000; }
 
 var KERF = 0.1, A_HOLE_IN = 55.149, A_HOLE_OUT = 58.149, A_RIM_OUT = 86.149;
 
-// A panel is a ~31.2mm-deep rectangle 40–90mm long. Either orientation: nesting rotates
-// panels to fit the sheet, and a test that only accepted the wide one reclassified five
-// rotated panels as unidentified hole geometry the moment they were turned.
+// Convex hull, and the minimum-area rectangle that contains it. A rotated rectangle's
+// axis-aligned bounding box is NOT its size: a 73.326 x 31.2 panel turned 45° measures
+// 66.527 square, which matches no panel and reads as unidentified geometry. Four were
+// reported missing from a sheet that had all sixteen because of exactly that. Measure
+// the shape, never the box around it.
+function hull(pts) {
+  var p = pts.slice().sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; });
+  function cross(o, a, b) {
+    return (a[0]-o[0])*(b[1]-o[1]) - (a[1]-o[1])*(b[0]-o[0]);
+  }
+  var lo = [], hi = [], i;
+  for (i = 0; i < p.length; i++) {
+    while (lo.length >= 2 && cross(lo[lo.length-2], lo[lo.length-1], p[i]) <= 0) lo.pop();
+    lo.push(p[i]);
+  }
+  for (i = p.length - 1; i >= 0; i--) {
+    while (hi.length >= 2 && cross(hi[hi.length-2], hi[hi.length-1], p[i]) <= 0) hi.pop();
+    hi.push(p[i]);
+  }
+  return lo.slice(0, -1).concat(hi.slice(0, -1));
+}
+function minRect(pts) {
+  var h = hull(pts);
+  if (h.length < 3) return null;
+  var best = null;
+  for (var i = 0; i < h.length; i++) {
+    var a = h[i], b = h[(i + 1) % h.length];
+    var dx = b[0]-a[0], dy = b[1]-a[1], L = Math.hypot(dx, dy);
+    if (L < 1e-9) continue;
+    var ux = dx/L, uy = dy/L, e0 = 1e9, e1 = -1e9, n0 = 1e9, n1 = -1e9;
+    h.forEach(function (q) {
+      var e = (q[0]-a[0])*ux + (q[1]-a[1])*uy, n = -(q[0]-a[0])*uy + (q[1]-a[1])*ux;
+      if (e < e0) e0 = e; if (e > e1) e1 = e;
+      if (n < n0) n0 = n; if (n > n1) n1 = n;
+    });
+    var w = e1-e0, hh = n1-n0, area = w*hh;
+    if (!best || area < best.area) {
+      best = { w: Math.max(w, hh), h: Math.min(w, hh), area: area,
+               ang: ((Math.atan2(dy, dx)*180/Math.PI % 90) + 90) % 90 };
+    }
+  }
+  return best;
+}
+function sizeOf(p) {
+  if (!p._sz) p._sz = minRect(p.pts) || { w: Math.max(p.w,p.h), h: Math.min(p.w,p.h), ang: 0 };
+  return p._sz;
+}
+
+// A panel is a ~31.2mm-deep rectangle 40–90mm long, at whatever angle it was nested.
 function isPanel(p) {
-  var lo = Math.min(p.w, p.h), hi = Math.max(p.w, p.h);
-  return lo > 28 && lo < 34 && hi > 40 && hi < 90;
+  var s = sizeOf(p);
+  return s.h > 28 && s.h < 34 && s.w > 40 && s.w < 90;
 }
 
 // Apothem range of a contour measured about a given centre — the octagon's own metric,
@@ -188,7 +234,11 @@ if (strokeClash.length) {
 }
 
 var agg = {};
-P.forEach(function (p) { var k=f(p.w)+' x '+f(p.h); agg[k]=(agg[k]||0)+1; });
+P.forEach(function (p) {
+  var sz = sizeOf(p);
+  var k = f(sz.w) + ' x ' + f(sz.h) + (sz.ang > 0.5 ? '  @' + f(sz.ang) + '°' : '');
+  agg[k] = (agg[k]||0) + 1;
+});
 console.log('\n  inventory');
 Object.keys(agg).sort(function(a,b){return parseFloat(b)-parseFloat(a);}).forEach(function (k) {
   var w0=parseFloat(k), h0=parseFloat(k.split('x')[1]), ex='';
@@ -309,18 +359,55 @@ if (plates.length && panels.length) {
       var margin = null;
       if (hi <= A_HOLE_IN) margin = A_HOLE_IN - hi;
       else if (lo >= A_RIM_OUT) margin = lo - A_RIM_OUT;
-      else { bad++; console.log('    *** CONFLICT: panel ' + f(pn.w) + ' @(' + f(pn.cx) + ',' + f(pn.cy) +
+      else { bad++; console.log('    *** CONFLICT: panel ' + f(sizeOf(pn).w) + ' @(' + f(pn.cx) + ',' + f(pn.cy) +
                                 ') crosses plate ' + pi + ' material, spans a ' + f(lo) + '…' + f(hi)); }
-      if (margin !== null && margin < tight) { tight = margin; tightWho = 'panel ' + f(pn.w) + ' vs plate ' + pi; }
+      if (margin !== null && margin < tight) { tight = margin; tightWho = 'panel ' + f(sizeOf(pn).w) + ' vs plate ' + pi; }
     });
   });
+  // Distance between the two outlines themselves. Bounding boxes were used here until
+  // panels were nested at 45°, where the box covers a great deal of sheet the part does
+  // not: it reported a 0.668mm gap between two panels that are nowhere near that close.
+  function segDist(p0, p1, q) {
+    var dx = p1[0]-p0[0], dy = p1[1]-p0[1], L2 = dx*dx + dy*dy;
+    var t = L2 ? Math.max(0, Math.min(1, ((q[0]-p0[0])*dx + (q[1]-p0[1])*dy) / L2)) : 0;
+    return Math.hypot(p0[0] + t*dx - q[0], p0[1] + t*dy - q[1]);
+  }
+  function polyDist(A, B) {
+    var best = 1e9;
+    [[A,B],[B,A]].forEach(function (pair) {
+      var X = pair[0], Y = pair[1];
+      for (var i = 0; i < X.length; i++) {
+        var a = X[i], b = X[(i+1) % X.length];
+        for (var j = 0; j < Y.length; j++) {
+          var d = segDist(a, b, Y[j]);
+          if (d < best) best = d;
+        }
+      }
+    });
+    return best;
+  }
+  function inside(poly, q) {
+    var c = false;
+    for (var i = 0, j = poly.length-1; i < poly.length; j = i++) {
+      if ((poly[i][1] > q[1]) !== (poly[j][1] > q[1]) &&
+          q[0] < (poly[j][0]-poly[i][0]) * (q[1]-poly[i][1]) / (poly[j][1]-poly[i][1]) + poly[i][0]) c = !c;
+    }
+    return c;
+  }
   var ov = 0, mg = 1e9, mgWho = '';
+  var hulls = panels.map(function (p) { return hull(p.pts); });
   for (var i = 0; i < panels.length; i++) for (var j = i + 1; j < panels.length; j++) {
     var a = panels[i], b = panels[j];
-    var g = Math.max(Math.max((a.cx - a.w / 2) - (b.cx + b.w / 2), (b.cx - b.w / 2) - (a.cx + a.w / 2)),
-                     Math.max((a.cy - a.h / 2) - (b.cy + b.h / 2), (b.cy - b.h / 2) - (a.cy + a.h / 2)));
-    if (g < 0) { ov++; console.log('    *** PANEL OVERLAP: ' + f(a.w) + ' and ' + f(b.w) + ' by ' + f(-g)); }
-    else if (g < mg) { mg = g; mgWho = f(a.w) + ' ↔ ' + f(b.w); }
+    if (Math.hypot(a.cx-b.cx, a.cy-b.cy) > 200) continue;
+    var overlap = hulls[i].some(function (q) { return inside(hulls[j], q); }) ||
+                  hulls[j].some(function (q) { return inside(hulls[i], q); });
+    if (overlap) {
+      ov++;
+      console.log('    *** PANEL OVERLAP: ' + f(sizeOf(a).w) + ' and ' + f(sizeOf(b).w));
+      continue;
+    }
+    var g = polyDist(hulls[i], hulls[j]);
+    if (g < mg) { mg = g; mgWho = f(sizeOf(a).w) + ' ↔ ' + f(sizeOf(b).w); }
   }
   console.log('\n  NESTING');
   console.log('    panels crossing plate material : ' + bad + (bad ? '  ✗' : '  ✓'));

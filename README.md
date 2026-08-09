@@ -33,13 +33,13 @@ almost invisibly against a transparency checkerboard. Green, orange and cyan are
 
 ## Just cut it
 
-**[`BuildA1_90_25.svg`](BuildA1_90_25.svg)** — the torus's 18 pieces plus 4 optional extras, 26 contours, verified.
+**[`BuildA1_90_25.svg`](BuildA1_90_25.svg)** — the torus's 18 pieces plus 2 optional stiffening rings, 24 contours, verified.
 
 | | |
 |---|---|
 | Material | 3mm Baltic birch ply |
 | Kerf (`burn`) | 0.1mm |
-| Sheet | 484 × 375mm |
+| Sheet | 489 × 351mm |
 | Pieces | 2 plates · 8 outer panels · 8 inner panels |
 | Optional extras | 2 single-piece stiffening rings · 2 square patches for joining sliced sections |
 | Result | 25.000mm radial × 25.000mm axial · 172.3 across flats · 110.3 bore |
@@ -58,7 +58,7 @@ inside the plate and ring holes, so they have to be cut before the hole that fre
 holes have to be cut before the rims that free the plates. Give all four a cutting operation and run them in that order.
 `verify.js` checks the sequence and will tell you if it is wrong.
 
-**Violet `#8000ff` is skip** — the 64 optional cuts described above, sixteen on each of the two
+**Violet `#8000ff` is skip** — the 56 optional cuts described above, fourteen on each of the two
 plates and two rings. Leave it unmapped or delete it. Blue does not appear at all: blue means
 engrave across these repositories and never cuts.
 
