@@ -55,7 +55,7 @@ you do want it cut.
 **Colour is the cut order: green → orange → cyan → black.** Eight panels and both patches are nested
 inside the plate and ring holes, so they have to be cut before the hole that frees that waste; the
 holes have to be cut before the rims that free the plates. Give all four a cutting operation and run them in that order.
-`verify.js` checks the sequence and will tell you if it is wrong.
+`verify_torus.js` checks the sequence and will tell you if it is wrong.
 
 **Violet `#8000ff` is skip** — the 24 optional cuts described above, twelve on each of the two
 plates. Leave it unmapped or delete it. Blue does not appear at all: blue means
@@ -122,7 +122,7 @@ anything and refuses, naming the minimum for your ring and thickness.
 ## Check your own file
 
 ```
-node verify.js BuildA1_90_25.svg RunA2_R59Point693.svg
+node verify_torus.js BuildA1_90_25.svg RunA2_R59Point693.svg
 ```
 
 Reports the stroke palette, contours, plate and hole geometry, hole concentricity, **joint phase**,
@@ -137,7 +137,7 @@ node torus-geometry-diagram.js 90 25 3        # redraw the figure at any size
 ## What else is here
 
 `RunA1/2/3` are the three generator outputs from the links above, unmodified. Run 2 doubles as the
-reference `verify.js` checks joint phase against, so keep it if you plan to verify your own files.
+reference `verify_torus.js` checks joint phase against, so keep it if you plan to verify your own files.
 Part 10 of the writeup says what each one is.
 
 ## Licence

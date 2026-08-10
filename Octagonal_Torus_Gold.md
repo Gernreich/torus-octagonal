@@ -164,7 +164,7 @@ The eight flipped segments come out as eight separate contours, so the hole star
 open polylines rather than one closed outline.
 
 **Stitching them back together — optional.** In `BuildA1_90_25.svg` the eight were joined into a
-single closed loop per plate, which is why `verify.js` reports `hole contours: 2  (1 per plate)`
+single closed loop per plate, which is why `verify_torus.js` reports `hole contours: 2  (1 per plate)`
 rather than 16. **This is probably unnecessary.** Measured before stitching, the largest gap between
 one segment's endpoint and its neighbour's was **0.077mm** — smaller than the 0.1mm `burn`, and
 smaller still than a real beam, so the cuts overlap and the waste drops out regardless.
@@ -234,7 +234,7 @@ reach the simple trumpet; the segments they define are also the patches for join
 together. Turn one green to cut it, and leave the rest violet.
 
 Ignore all of them for a plain torus — set the colour to a non-cutting layer, or delete it.
-`verify.js` skips exactly this one colour, which is why it reports 20 contours rather than 44.
+`verify_torus.js` skips exactly this one colour, which is why it reports 20 contours rather than 44.
 
 ↩ [back to the top](#octagonaltorus--parametric-90mm-radius-25--25mm-cross-section)
 
@@ -273,7 +273,7 @@ So set your laser to run **green → orange → cyan → black**, and give every
 cutting operation. Leave violet unmapped, or delete it. A job set up per-colour silently skips any
 colour you leave unmapped, which is a hazard for the four and exactly what you want for the fifth.
 
-`verify.js` checks all of this. It prints the palette, marks each colour counted or ignored, lists
+`verify_torus.js` checks all of this. It prints the palette, marks each colour counted or ignored, lists
 the four in order with what each one is, and fails loudly if a nested panel is scheduled after the
 hole it sits in, or a hole after its rim. It also counts the skip lines per octagon and checks that
 none runs past that octagon's outer edge, so the sixteen claimed above are read out of the file
@@ -307,7 +307,7 @@ into the panel's notches.
 - Too tight → set `play` to 0.05–0.1 — **multiples of thickness**, so 0.15–0.30mm at t = 3
 
 **What the dry-fit is actually for.** Registration *is* provable from coordinates — that is exactly
-what `verify.js`'s phase check does, and a `COMPLEMENTARY ✓` means the tabs and notches are in the
+what `verify_torus.js`'s phase check does, and a `COMPLEMENTARY ✓` means the tabs and notches are in the
 right places relative to each other. Both failures this project actually had were caught that way:
 a hole in the wrong phase, and a panel set of 5/3/2/6 where an octagon needs 4/4/4/4.
 
@@ -344,16 +344,16 @@ takes 0.1 off each edge. Neither is an error — they are the same part before a
 | inner panels, long / short — 4 of each | **50.130** / **48.372** × 31.200 | 49.930 / 48.172 × 31.000 |
 
 The bold figures are the ones quoted elsewhere in this document: octagon geometry is given nominal
-(Part 9), panel widths as drawn, since that is what boxes.py emits and what `verify.js` reports.
+(Part 9), panel widths as drawn, since that is what boxes.py emits and what `verify_torus.js` reports.
 
 ## Tooling
 
-Two scripts live beside this document — [`verify.js`](verify.js) and
+Two scripts live beside this document — [`verify_torus.js`](verify_torus.js) and
 [`torus-geometry-diagram.js`](torus-geometry-diagram.js). Everything they report has been derived
 and explained below; they exist so a file can be checked in one command instead of by eye.
 
 ```
-node verify.js BuildA1_90_25.svg RunA2_R59Point693.svg
+node verify_torus.js BuildA1_90_25.svg RunA2_R59Point693.svg
 ```
 
 Checks a cut file end to end: the stroke **palette**, with each colour marked counted or ignored;
@@ -768,7 +768,7 @@ At R 60 / 25 / 3, dropping to 0.5 adds a finger to run 2's disc and leaves run 3
 is the mismatch, arriving by the route meant to cure it.
 
 So **change it on run 3**, the hole cutter. That moves the hole and leaves the panels it has to mate
-with where they are. Regenerate, re-invert, and confirm with `verify.js` rather than by eye: a
+with where they are. Regenerate, re-invert, and confirm with `verify_torus.js` rather than by eye: a
 `COMPLEMENTARY ✓` is the whole test, and it costs nothing next to a sheet of ply.
 
 ---
@@ -813,7 +813,7 @@ Five pitfalls cost real time and are worth recording:
    at their pre-transform coordinates. Here it produced a confident, wrong claim that a correctly
    centred hole sat 98mm off its plate. If a part looks displaced by a round number, suspect the
    measuring tool before the file.
-5. **Filtering by colour.** `verify.js` skips the trumpet lines by stroke colour, and its ignore
+5. **Filtering by colour.** `verify_torus.js` skips the trumpet lines by stroke colour, and its ignore
    list once included blue. When the cut contours were recoloured for cutting order, six intact
    panels became blue and the tool reported 14 contours instead of 20 — a correct file looking like
    a broken one, from a file whose geometry had not changed at all. A filter that drops geometry
@@ -839,7 +839,7 @@ Nothing else in the repository is a part:
 
 | file | what it is |
 |---|---|
-| `verify.js` | checks a cut file end to end — see [Tooling](#tooling) |
+| `verify_torus.js` | checks a cut file end to end — see [Tooling](#tooling) |
 | `torus-geometry-diagram.js` | draws the figure at the top, and prints the three radii |
 | `torus-geometry-diagram.svg` | that figure, regenerated by the script — do not edit by hand |
 | `torus-3quarter-view.svg` | drawing of the finished torus, standing in until the photograph exists |
@@ -1014,7 +1014,7 @@ tempting place to nest small panels, and the plate rims come last for the same r
 frees the waste or the plate, anything still to be cut in it can move. Order the job so nested parts
 go first, then the holes, then the rims. Colour is the usual way to tell a laser that sequence —
 `BuildA1_90_25.svg` does exactly this, and [Colour is the cut order](#colour-is-the-cut-order)
-describes the scheme. `verify.js` will tell you if a file gets it wrong.
+describes the scheme. `verify_torus.js` will tell you if a file gets it wrong.
 
 ---
 

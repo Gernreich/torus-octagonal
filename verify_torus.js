@@ -1,7 +1,13 @@
 // Verify a torus-octagonal cut file: geometry, joint phase, and nesting clearances.
 //
-//   node verify.js BuildA1_90_25.svg
-//   node verify.js BuildA1_90_25.svg RunA2_R59Point693.svg    # 2nd arg = disc the panels key to
+// Named for what it knows. It understands one object -- an octagonal torus with plates
+// at R 90, a hole at apothem 58.149 and a five-colour cut order -- and its build sheet,
+// its three boxes.py runs and the trumpet that shares the plate. Given anything else it
+// prints the palette, inventory and sheet bounds, which are measured and correct, then
+// says so and stops rather than reporting nonsense with stars on it.
+//
+//   node verify_torus.js BuildA1_90_25.svg
+//   node verify_torus.js BuildA1_90_25.svg RunA2_R59Point693.svg    # 2nd arg = disc the panels key to
 //
 // Transform-aware: composes every <g transform> on the ancestor chain. A tool that skips them
 // reports parts at pre-transform coordinates and will confidently mislocate a correct part.
