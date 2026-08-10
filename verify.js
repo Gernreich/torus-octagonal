@@ -88,9 +88,72 @@ function strokeOf(attrs) {
   var c = m[1].toLowerCase();
   return c === '#000000' ? 'black' : c;
 }
+// ─── geometry from the shapes that are not paths ──────────────────────────────
+// collect() read <g> and <path> only. Everything else -- a bore drawn as <circle>, an
+// outline as <rect>, a fold as <line> -- was not skipped with a warning, it was never
+// seen: absent from the contour count, the inventory, the palette and therefore the cut
+// order, the nesting checks and the sheet bounds. The tool reported success on a partial
+// reading, which is the worst way for a checker to be wrong.
+//
+// Circles and ellipses have no vertices, so they are sampled. 360 segments puts the
+// radial error at r*(1-cos(0.5°)) -- 0.0023mm on a 60mm radius, far below anything
+// measured here.
+var ARC = 360;
+function attrNum(attrs, name, dflt) {
+  var m = new RegExp('\\b' + name + '="([^"]*)"').exec(attrs);
+  return m ? (parseFloat(m[1]) || 0) : dflt;
+}
+function shapePts(tag, attrs) {
+  var i, t, out = [];
+  if (tag === 'rect') {
+    var x = attrNum(attrs,'x',0), y = attrNum(attrs,'y',0);
+    var w = attrNum(attrs,'width',0), h = attrNum(attrs,'height',0);
+    if (!(w > 0 && h > 0)) return [];
+    var rx = Math.min(attrNum(attrs,'rx',0), w/2), ry = Math.min(attrNum(attrs,'ry',0) || attrNum(attrs,'rx',0), h/2);
+    if (rx > 0 && ry > 0) {                       // rounded corners, sampled
+      var corners = [[x+w-rx, y+ry, 0], [x+w-rx, y+h-ry, 1], [x+rx, y+h-ry, 2], [x+rx, y+ry, 3]];
+      corners.forEach(function (c) {
+        for (i = 0; i <= 16; i++) {
+          t = (-Math.PI/2) + c[2]*Math.PI/2 + (i/16)*Math.PI/2;
+          out.push([c[0] + rx*Math.cos(t), c[1] + ry*Math.sin(t)]);
+        }
+      });
+      return out;
+    }
+    return [[x,y],[x+w,y],[x+w,y+h],[x,y+h]];
+  }
+  if (tag === 'circle' || tag === 'ellipse') {
+    var cx = attrNum(attrs,'cx',0), cy = attrNum(attrs,'cy',0);
+    var ax = tag === 'circle' ? attrNum(attrs,'r',0) : attrNum(attrs,'rx',0);
+    var ay = tag === 'circle' ? ax : attrNum(attrs,'ry',0);
+    if (!(ax > 0 && ay > 0)) return [];
+    for (i = 0; i < ARC; i++) { t = i/ARC*2*Math.PI; out.push([cx + ax*Math.cos(t), cy + ay*Math.sin(t)]); }
+    return out;
+  }
+  if (tag === 'line') {
+    return [[attrNum(attrs,'x1',0), attrNum(attrs,'y1',0)],
+            [attrNum(attrs,'x2',0), attrNum(attrs,'y2',0)]];
+  }
+  if (tag === 'polyline' || tag === 'polygon') {
+    var pm = /\bpoints="([^"]*)"/.exec(attrs);
+    if (!pm) return [];
+    var n = pm[1].trim().split(/[\s,]+/).map(Number);
+    for (i = 0; i + 1 < n.length; i += 2) out.push([n[i], n[i+1]]);
+    return out;
+  }
+  return [];
+}
+// A path in these files always comes from a stroked context, so no stroke means black --
+// that is what strokeOf does and it stays. A bare shape is different: BuildA1_90_25.svg
+// carries a 1029.79 x 880.71mm <rect> with no stroke and no style, an Inkscape canvas
+// artifact larger than the sheet. Counting it would have added a phantom contour and
+// broken the bounds check. So a non-path shape must declare a stroke, its own or an
+// ancestor's, before it is treated as cut geometry.
+function hasStroke(attrs) { return /stroke\s*[:=]\s*"?#?[0-9a-zA-Z]/.test(attrs) && !/stroke\s*[:=]\s*"?none/.test(attrs); }
+
 function collect(file) {
   var src = fs.readFileSync(file, 'utf8'), stack = [[1,0,0,1,0,0]], parts = [];
-  var re = /<(\/?)(g|path)\b([^>]*?)(\/?)>/g, m;
+  var re = /<(\/?)(g|path|rect|circle|ellipse|line|polyline|polygon)\b([^>]*?)(\/?)>/g, m;
   while ((m = re.exec(src))) {
     var close=m[1], tag=m[2], attrs=m[3], self=m[4];
     if (tag === 'g') {
@@ -102,7 +165,15 @@ function collect(file) {
     }
     if (close) continue;
     var dm = /(?:^|\s)d="([^"]+)"/.exec(attrs);
-    if (!dm) continue;
+    var raw;
+    if (tag === 'path') {
+      if (!dm) continue;
+      raw = pts_(dm[1]);
+    } else {
+      if (!hasStroke(attrs)) continue;      // an unstroked shape is not a cut
+      raw = shapePts(tag, attrs);
+    }
+    if (!raw.length) continue;
     var col = strokeOf(attrs);
     if (col === 'black' && /fill:\s*#00ff00/i.test(attrs)) col = '#00ff00';
     var ign = Object.prototype.hasOwnProperty.call(IGNORE, col);
@@ -111,7 +182,7 @@ function collect(file) {
     if (ign) continue;
     var pm = /transform="([^"]+)"/.exec(attrs);
     var M = pm ? mul(stack[stack.length-1], parseT(pm[1])) : stack[stack.length-1];
-    var p = pts_(dm[1]).map(function (q) { return apply(M, q); });
+    var p = raw.map(function (q) { return apply(M, q); });
     // A closed rectangle is four points. The threshold was 8, to skip stray fragments,
     // and it silently dropped whole parts: a square face drawn "M V H V Z" never reached
     // the inventory, so a four-piece sheet was reported as three. Fragments are excluded
@@ -541,7 +612,7 @@ if (plates.length) {
 // nothing could contradict it. A count printed from the file can.
 (function () {
   var src = fs.readFileSync(file, 'utf8'), stack = [[1,0,0,1,0,0]], skip = [];
-  var re = /<(\/?)(g|path)\b([^>]*?)(\/?)>/g, m;
+  var re = /<(\/?)(g|path|rect|circle|ellipse|line|polyline|polygon)\b([^>]*?)(\/?)>/g, m;
   while ((m = re.exec(src))) {
     var close = m[1], tag = m[2], attrs = m[3], self = m[4];
     if (tag === 'g') {
@@ -552,11 +623,15 @@ if (plates.length) {
       continue;
     }
     if (close) continue;
+    if (!Object.prototype.hasOwnProperty.call(IGNORE, strokeOf(attrs))) continue;
     var dm = /(?:^|\s)d="([^"]+)"/.exec(attrs);
-    if (!dm || !Object.prototype.hasOwnProperty.call(IGNORE, strokeOf(attrs))) continue;
+    var base;
+    if (tag === 'path') { if (!dm) continue; base = pts_(dm[1]); }
+    else { if (!hasStroke(attrs)) continue; base = shapePts(tag, attrs); }
+    if (!base.length) continue;
     var pm = /transform="([^"]+)"/.exec(attrs);
     var M = pm ? mul(stack[stack.length-1], parseT(pm[1])) : stack[stack.length-1];
-    var q = pts_(dm[1]).map(function (t) { return apply(M, t); });
+    var q = base.map(function (t) { return apply(M, t); });
     if (q.length) skip.push({ pts: q, n: q.length });
   }
   if (!skip.length || !plates.length) return;
