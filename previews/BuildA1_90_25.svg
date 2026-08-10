@@ -5,10 +5,6 @@
    width="457.63501mm"
    version="1.1"
    id="svg10"
-   sodipodi:docname="BuildA1_90_25.svg"
-   inkscape:version="1.4.2 (ebf0e940, 2025-05-08)"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -22,27 +18,6 @@
      CUT FILE keeps the exact values your laser keys on.
      Cut the file in the repository root, not this one. -->
   <rect x="0.0" y="0.0" width="457.63501" height="217.14201" fill="#faf7f0"/>
-  <sodipodi:namedview
-     id="namedview1"
-     pagecolor="#ffffff"
-     bordercolor="#000000"
-     borderopacity="0.25"
-     inkscape:showpageshadow="2"
-     inkscape:pageopacity="0.0"
-     inkscape:pagecheckerboard="0"
-     inkscape:deskcolor="#d1d1d1"
-     inkscape:document-units="mm"
-     showguides="true"
-     inkscape:zoom="0.67898239"
-     inkscape:cx="860.84707"
-     inkscape:cy="407.22706"
-     inkscape:window-width="1688"
-     inkscape:window-height="932"
-     inkscape:window-x="2154"
-     inkscape:window-y="30"
-     inkscape:window-maximized="0"
-     inkscape:current-layer="svg10"
-     showgrid="false" />
   <defs
      id="defs10">
     <rect
