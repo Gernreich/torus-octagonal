@@ -33,15 +33,14 @@ almost invisibly against a transparency checkerboard. Green, orange and cyan are
 
 ## Just cut it
 
-**[`BuildA1_90_25.svg`](BuildA1_90_25.svg)** — the torus's 18 pieces plus 2 optional stiffening rings, 24 contours, verified.
+**[`BuildA1_90_25.svg`](BuildA1_90_25.svg)** — the torus's 18 pieces, 20 contours, verified.
 
 | | |
 |---|---|
 | Material | 3mm Baltic birch ply |
 | Kerf (`burn`) | 0.1mm |
-| Sheet | 489 × 351mm |
+| Sheet | 458 × 218mm |
 | Pieces | 2 plates · 8 outer panels · 8 inner panels |
-| Optional extras | 2 single-piece stiffening rings · 2 square patches for joining sliced sections |
 | Result | 25.000mm radial × 25.000mm axial · 172.3 across flats · 110.3 bore |
 
 Dry-fit one plate against one inner panel in cardboard before committing a sheet. The plate's tabs
@@ -58,18 +57,18 @@ inside the plate and ring holes, so they have to be cut before the hole that fre
 holes have to be cut before the rims that free the plates. Give all four a cutting operation and run them in that order.
 `verify.js` checks the sequence and will tell you if it is wrong.
 
-**Violet `#8000ff` is skip** — the 56 optional cuts described above, fourteen on each of the two
-plates and two rings. Leave it unmapped or delete it. Blue does not appear at all: blue means
+**Violet `#8000ff` is skip** — the 24 optional cuts described above, twelve on each of the two
+plates. Leave it unmapped or delete it. Blue does not appear at all: blue means
 engrave across these repositories and never cuts.
 
 The sequence is shared by every LaserMadeMusic repository — blue engraves, then
 green → orange → cyan → black, with black always the cut that frees the part and violet always
 skip. A file uses only the stages it needs.
 
-**Two optional stiffening rings** sit on the lower half of the sheet — plain octagons, no joinery,
-172.258mm across the flats with a 110.298mm hole, which is the finished torus's own outside and bore.
-Lay one on a face and it sits flush at both edges, adding material without changing any dimension you
-have to fit to. The torus closes without them; cut them if it needs stiffening.
+**Two optional stiffening rings are described in the writeup but are not on this sheet.** They are
+plain octagons, no joinery, 172.258mm across the flats with a 110.298mm hole — the finished torus's
+own outside and bore — so one laid on a face sits flush at both edges. The torus closes without
+them, and this file ships its 18 pieces and nothing else.
 
 ## Build it at your own size
 
