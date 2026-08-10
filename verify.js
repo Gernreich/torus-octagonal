@@ -1,4 +1,4 @@
-// Verify an octagonal-torus cut file: geometry, joint phase, and nesting clearances.
+// Verify a torus-octagonal cut file: geometry, joint phase, and nesting clearances.
 //
 //   node verify.js BuildA1_90_25.svg
 //   node verify.js BuildA1_90_25.svg RunA2_R59Point693.svg    # 2nd arg = disc the panels key to
