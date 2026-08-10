@@ -112,7 +112,11 @@ function collect(file) {
     var pm = /transform="([^"]+)"/.exec(attrs);
     var M = pm ? mul(stack[stack.length-1], parseT(pm[1])) : stack[stack.length-1];
     var p = pts_(dm[1]).map(function (q) { return apply(M, q); });
-    if (p.length < 8) continue;
+    // A closed rectangle is four points. The threshold was 8, to skip stray fragments,
+    // and it silently dropped whole parts: a square face drawn "M V H V Z" never reached
+    // the inventory, so a four-piece sheet was reported as three. Fragments are excluded
+    // by being open two-point lines, not by being simple.
+    if (p.length < 4) continue;
     var xs=p.map(function(q){return q[0];}), ys=p.map(function(q){return q[1];});
     var x0=Math.min.apply(null,xs), x1=Math.max.apply(null,xs);
     var y0=Math.min.apply(null,ys), y1=Math.max.apply(null,ys);
