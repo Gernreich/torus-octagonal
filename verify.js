@@ -332,7 +332,60 @@ Object.keys(agg).sort(function(a,b){return parseFloat(b)-parseFloat(a);}).forEac
 });
 
 var plates = P.filter(function(p){ return p.w>160 && Math.abs(p.w-p.h)<1; });
+
+// ─── is this a file this tool knows anything about? ───────────────────────────
+// Everything below understands exactly one object: an octagonal torus with plates at
+// R 90, a hole at apothem 58.149 and a five-colour cut order. Pointed anywhere else it
+// still parses correctly -- piece counts and sizes are right -- but its plate, hole and
+// cut-order logic is meaningless, and it said so in stars: a buzz disc was reported as a
+// plate with a missing hole, a geometry diagram's slate and blue as cut colours out of
+// sequence. A checker whose complaints have to be mentally discarded trains you to
+// discard the real ones too.
+//
+// The signature is a regular octagon at the rim apothem. Nothing else here has one.
+// Two signatures, because the family has two shapes of file. The build sheet and the
+// R 90 run carry an octagon at the rim apothem -- an octagon's corners project further
+// than its flats, so only its outer edge is diagnostic, and that edge is the rim apothem
+// plus half the drawn stroke. The inner-disc runs (R 59.693, R 56.446) have no such
+// octagon at all, and are recognised by their panels instead: four or more at one of the
+// four widths this torus uses. Matching on "looks like a panel" alone was not enough --
+// trumpet-curved's 75mm walls are 75.14 x 31.14 and pass that shape test while belonging
+// to a different instrument.
+var nPanels = P.filter(isPanel).length;
+var nDiscs  = P.filter(function (p) { return sizeOf(p).w > 90 && Math.abs(p.w - p.h) < 1; }).length;
+var hasRim  = plates.some(function (pl) {
+  return Math.abs(apoRange(pl, pl.cx, pl.cy).hi - (A_RIM_OUT + 0.1)) < 0.5;
+});
+// Structure, not magic numbers. A disc run is two square discs and eight panels, and the
+// R 56.446 run's panels are a different width from the build's -- listing the four build
+// widths gated it, which is wrong: it is a torus file. Two discs plus four panels catches
+// all three runs and nothing else here. trumpet-curved's 75mm walls pass "looks like a
+// panel" but come with no discs.
+var isTorusFamily = hasRim || (nDiscs >= 2 && nPanels >= 4);
+
+// A figure is not a sheet. torus-geometry-diagram.svg draws this torus at true size, so
+// it has the rim octagon and passes every structural test -- and then its slate, blue and
+// green get reported as cut colours out of sequence. What separates it is the ink: a cut
+// sheet's colours all belong to the cut order or the skip list, a drawing's mostly do not.
+var KNOWN_INK = { 'black':1, '#00ff00':1, '#ff8000':1, '#00ffff':1, '#0000ff':1, '#ff0000':1, '#8000ff':1 };
+var inks = Object.keys(palette);
+var strangers = inks.filter(function (c) { return !KNOWN_INK[c]; }).length;
+if (strangers > inks.length / 2) isTorusFamily = false;
+if (!isTorusFamily) {
+  console.log('\n  NOT A TORUS-FAMILY SHEET');
+  console.log('    No octagonal plate at rim apothem ' + A_RIM_OUT + ' — this file is not one');
+  console.log('    this tool was written for. The palette, inventory and sheet bounds above');
+  console.log('    are measured and correct. Everything below them would be nonsense, so it');
+  console.log('    is skipped: plate and hole geometry, joint phase, nesting clearances,');
+  console.log('    cut order, skip lines.');
+  console.log('    For a sheet like this use svg-stroke-check.py, and read the sizes above.\n');
+  process.exit(0);
+}
 var holeCount = plates.reduce(function (t, pl) { return t + holePartsFor(pl, P).length; }, 0);
+// boxes.py run 1 emits two solid discs; having no hole is what they are, and the hole
+// cutter is run 3. No plate having a hole is therefore a kind of file, not a fault --
+// but SOME plates having one and others not is a fault, and still reads as one.
+var anyHole = holeCount > 0;
 console.log('\n  plates: ' + plates.length + '   hole contours: ' + holeCount +
             (plates.length ? '  (' + (holeCount / plates.length) + ' per plate — 8 if segmented, 1 if stitched)' : ''));
 
@@ -341,7 +394,9 @@ plates.forEach(function (PL, i) {
   var all = []; near.forEach(function(s){ all = all.concat(s.pts); });
   if (!all.length) {
     console.log('\n  PLATE ' + i + '  centre (' + f(PL.cx) + ', ' + f(PL.cy) + ')');
-    console.log('     *** NO HOLE FOUND IN THIS PLATE — it is solid, or the hole is not positioned in it ***');
+    console.log(anyHole
+      ? '     *** NO HOLE FOUND IN THIS PLATE — it is solid, or the hole is not positioned in it ***'
+      : '     solid disc — no plate here carries a hole, so this is a disc run, not a build sheet');
     return;
   }
   var xs=all.map(function(q){return q[0];}), ys=all.map(function(q){return q[1];});
@@ -401,7 +456,9 @@ if (plates.length) {
   var ha = []; sg0.forEach(function (s) { ha = ha.concat(s.pts); });
   if (!ha.length) {
     console.log('\n  JOINT PHASE');
-    console.log('    *** cannot check — no hole geometry found in plate 0 ***');
+    console.log(anyHole
+      ? '    *** cannot check — no hole geometry found in plate 0 ***'
+      : '    not applicable — a disc run has no hole to phase against');
   } else {
     var hxs = ha.map(function (q) { return q[0]; }), hys = ha.map(function (q) { return q[1]; });
     var hcx = (Math.min.apply(null, hxs) + Math.max.apply(null, hxs)) / 2;
