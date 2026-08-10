@@ -268,10 +268,16 @@ function apoRange(p, cx, cy) {
 // that is not the hole: it is a piece being harvested from the waste disc the hole frees.
 // Until patches were added to the waste this distinction did not exist and anything inside
 // the rim counted as hole geometry — which quietly reported 6 holes across 4 plates.
+// The hole boundary sits AT the hole apothem, so its innermost point IS that apothem --
+// not merely at or beyond it. The looser test accepted anything nested further out: two
+// 12mm parts added inside the plate wall at apothem 67-79 were unioned into "the hole",
+// which threw the eccentricity to 13.842mm and emptied the joint-phase pattern, so the
+// tool announced "NOT COMPLEMENTARY -- will not assemble" about a hole that was exactly
+// concentric. A segmented hole still passes: every segment lies on the same apothem.
 function isHolePartOf(plate, p) {
   if (p === plate || isPanel(p)) return false;
   var r = apoRange(p, plate.cx, plate.cy);
-  return r.hi <= 83.0 && r.lo >= A_HOLE_IN - 0.5;
+  return r.hi <= 83.0 && Math.abs(r.lo - A_HOLE_IN) <= 0.5;
 }
 function holePartsFor(plate, all) {
   return all.filter(function (p) { return isHolePartOf(plate, p); });
