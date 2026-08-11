@@ -32,6 +32,50 @@ function parseT(s) {
   }
   return M;
 }
+// Sample an elliptical arc, rather than jumping to its far end.
+//
+// pts_() used to take only an arc's endpoint. A circle drawn as four arcs therefore
+// reduced to four points at the cardinal positions -- a diamond -- and every measurement
+// built on it was confidently wrong: eleven concentric mouthpiece rings were reported as
+// twelve squares at 1/root2 of their true diameter, a reading consistent enough to be
+// believed and documented. Arcs are geometry, not travel.
+//
+// Endpoint to centre parameterisation, SVG 1.1 F.6.5. Sampled about every degree, so the
+// sagitta error is r*(1-cos(0.5deg)) -- 0.0023mm on a 60mm radius.
+function arcPts(x1, y1, rx, ry, rot, large, sweep, x2, y2) {
+  if (!rx || !ry) return [[x2, y2]];
+  rx = Math.abs(rx); ry = Math.abs(ry);
+  var phi = rot * Math.PI / 180, cp = Math.cos(phi), sp = Math.sin(phi);
+  var dx2 = (x1 - x2) / 2, dy2 = (y1 - y2) / 2;
+  var x1p =  cp * dx2 + sp * dy2, y1p = -sp * dx2 + cp * dy2;
+  var lam = (x1p*x1p)/(rx*rx) + (y1p*y1p)/(ry*ry);
+  if (lam > 1) { var k = Math.sqrt(lam); rx *= k; ry *= k; }
+  var num = rx*rx*ry*ry - rx*rx*y1p*y1p - ry*ry*x1p*x1p;
+  var den = rx*rx*y1p*y1p + ry*ry*x1p*x1p;
+  var co = den ? Math.sqrt(Math.max(0, num / den)) : 0;
+  if (large === sweep) co = -co;
+  var cxp = co * rx * y1p / ry, cyp = -co * ry * x1p / rx;
+  var cx = cp*cxp - sp*cyp + (x1 + x2)/2, cy = sp*cxp + cp*cyp + (y1 + y2)/2;
+  function ang(ux, uy, vx, vy) {
+    var d = Math.sqrt((ux*ux+uy*uy)*(vx*vx+vy*vy));
+    var t = d ? Math.max(-1, Math.min(1, (ux*vx + uy*vy) / d)) : 1;
+    var a = Math.acos(t);
+    return (ux*vy - uy*vx < 0) ? -a : a;
+  }
+  var ux = (x1p - cxp)/rx, uy = (y1p - cyp)/ry;
+  var vx = (-x1p - cxp)/rx, vy = (-y1p - cyp)/ry;
+  var th1 = ang(1, 0, ux, uy), dth = ang(ux, uy, vx, vy);
+  if (!sweep && dth > 0) dth -= 2*Math.PI;
+  else if (sweep && dth < 0) dth += 2*Math.PI;
+  var n = Math.max(4, Math.ceil(Math.abs(dth) / (Math.PI/180)));
+  var pts = [];
+  for (var i = 1; i <= n; i++) {
+    var th = th1 + dth * (i / n);
+    var ct = Math.cos(th), st = Math.sin(th);
+    pts.push([cx + cp*rx*ct - sp*ry*st, cy + sp*rx*ct + cp*ry*st]);
+  }
+  return pts;
+}
 function pts_(d) {
   var toks = d.match(/[MmLlHhVvCcSsQqAaZz]|-?\d*\.?\d+(?:[eE]-?\d+)?/g) || [];
   var out=[], i=0, cmd=null, x=0, y=0, sx=0, sy=0;
@@ -46,7 +90,12 @@ function pts_(d) {
     else if (c==='V'){ var w=num(); y=rel?y+w:w; out.push([x,y]); }
     else if (c==='C'){ num();num();num();num(); var ex=num(),ey=num(); x=rel?x+ex:ex; y=rel?y+ey:ey; out.push([x,y]); }
     else if (c==='S'||c==='Q'){ num();num(); var qx=num(),qy=num(); x=rel?x+qx:qx; y=rel?y+qy:qy; out.push([x,y]); }
-    else if (c==='A'){ num();num();num();num();num(); var ax=num(),ay=num(); x=rel?x+ax:ax; y=rel?y+ay:ay; out.push([x,y]); }
+    else if (c==='A'){
+      var arx=num(), ary=num(), arot=num(), alarge=num(), asweep=num();
+      var ax=num(), ay=num(), ex=rel?x+ax:ax, ey=rel?y+ay:ay;
+      arcPts(x, y, arx, ary, arot, alarge, asweep, ex, ey).forEach(function(q){ out.push(q); });
+      x=ex; y=ey;
+    }
     else if (c==='Z'){ x=sx; y=sy; }
     else i++;
   }
@@ -250,8 +299,31 @@ function minRect(pts) {
   }
   return best;
 }
+// A circle has no minimum-area rectangle worth the name -- every orientation gives the
+// same area, so the one the caliper happens to land on is noise. Reporting "@68.5°" on a
+// round part is the kind of confident, meaningless label that gets believed, so roundness
+// is detected and the angle suppressed.
+// Test the convex hull, not every point: a ring holds an outer circle and an aperture at
+// two different radii, so the whole set is never equidistant from anything. The hull of a
+// ring is its outer boundary, which is the shape the size describes.
+function isRound(p) {
+  var h = hull(p.pts), i;
+  if (h.length < 16) return false;
+  var cx = 0, cy = 0;
+  for (i = 0; i < h.length; i++) { cx += h[i][0]; cy += h[i][1]; }
+  cx /= h.length; cy /= h.length;
+  var lo = 1e9, hi = -1e9;
+  for (i = 0; i < h.length; i++) {
+    var r = Math.hypot(h[i][0]-cx, h[i][1]-cy);
+    if (r < lo) lo = r; if (r > hi) hi = r;
+  }
+  return hi > 0 && (hi - lo) / hi < 0.02;
+}
 function sizeOf(p) {
-  if (!p._sz) p._sz = minRect(p.pts) || { w: Math.max(p.w,p.h), h: Math.min(p.w,p.h), ang: 0 };
+  if (!p._sz) {
+    p._sz = minRect(p.pts) || { w: Math.max(p.w,p.h), h: Math.min(p.w,p.h), ang: 0 };
+    if (isRound(p)) { p._sz.ang = 0; p._sz.round = true; }
+  }
   return p._sz;
 }
 
@@ -323,7 +395,8 @@ if (strokeClash.length) {
 var agg = {};
 P.forEach(function (p) {
   var sz = sizeOf(p);
-  var k = f(sz.w) + ' x ' + f(sz.h) + (sz.ang > 0.5 ? '  @' + f(sz.ang) + '°' : '');
+  var k = (sz.round ? 'ø ' + f(sz.w)
+                    : f(sz.w) + ' x ' + f(sz.h) + (sz.ang > 0.5 ? '  @' + f(sz.ang) + '°' : ''));
   agg[k] = (agg[k]||0) + 1;
 });
 console.log('\n  inventory');
