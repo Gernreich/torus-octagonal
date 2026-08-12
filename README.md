@@ -146,11 +146,13 @@ Released under **[CC0 1.0](LICENSE)** — public domain, no strings. Cut it, mod
 make, no attribution required. A credit is always welcome but never owed.
 
 That dedication covers what is mine: the writeup, the diagram and its generator, and the tools. The
-part geometry itself comes from **[boxes.py](https://boxes.hackerspace-bamberg.de/)** by Hackerspace
-Bamberg — the SVGs carry its `dc:source` provenance in their metadata. Check boxes.py's own terms if
-you plan to redistribute generated output at scale.
+part geometry itself comes from **[boxes.py](https://www.festi.info/boxes.py/)** by **Florian Festi** — the SVGs carry its
+`dc:source` provenance in their metadata. boxes.py is GPL 3.0; its source is at
+[github.com/florianfesti/boxes](https://github.com/florianfesti/boxes). Check its own terms if you
+plan to redistribute generated output at scale.
 
 ## Credit
 
-Parts generated with [boxes.py](https://boxes.hackerspace-bamberg.de/) (Hackerspace Bamberg),
-generator **RegularBox**.
+Parts generated with **[boxes.py](https://www.festi.info/boxes.py/)** by **Florian Festi** (GPL 3.0,
+[source](https://github.com/florianfesti/boxes)), generator **RegularBox**, run on the
+[Hackerspace Bamberg instance](https://boxes.hackerspace-bamberg.de/).

@@ -484,7 +484,9 @@ measured. 1.0824 is identical at every size. *That* is what a real ratio looks l
 
 # PART 4 — The generator
 
-**<https://boxes.hackerspace-bamberg.de/>** — boxes.py, generator **RegularBox**.
+**[boxes.py](https://www.festi.info/boxes.py/)** by **Florian Festi**, generator **RegularBox**. GPL 3.0, source at
+[github.com/florianfesti/boxes](https://github.com/florianfesti/boxes); the runs below use the
+[Hackerspace Bamberg instance](https://boxes.hackerspace-bamberg.de/).
 
 Settings used:
 
