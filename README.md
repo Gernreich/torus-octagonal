@@ -13,6 +13,9 @@ here as markdown: [`Octagonal_Torus_Gold.md`](Octagonal_Torus_Gold.md).
 
 **[Download everything as a ZIP](https://github.com/Gernreich/torus-octagonal/archive/refs/heads/main.zip)** — the cut file, the writeup, the diagram and the verification tools.
 
+**[The rest of the build files](https://gernreich.github.io/)** — every instrument,
+generator and tool, indexed.
+
 ## The files, at a glance
 
 <p>
