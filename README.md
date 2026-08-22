@@ -5,6 +5,7 @@ A laser-cut octagonal torus: two nested octagonal tubes joined by annular plates
 octagon of R 90 in 3mm Baltic birch plywood — but those are three numbers you choose, and everything else
 derives from them, within one constraint. [Build it at your own size](#build-it-at-your-own-size).
 
+<!-- readme-only -->
 **[Read the writeup](https://gernreich.github.io/torus-octagonal/)** — the trigonometry,
 the generator settings, and how every number was verified against the cut files. Also
 here as markdown: [`Octagonal_Torus_Gold.md`](Octagonal_Torus_Gold.md).
